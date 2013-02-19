@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <errno.h>
+#include <string.h>
 #include <linux/limits.h>
 
 /********************----- STRUCT: Serial -----********************/
@@ -59,7 +60,7 @@ Result serial_create(int const i_deviceID,
 			deviceBaudRate = B115200;
 			break;
 		default:
-			fprintf(stderr, "%s: serial_create() - Invalid baudrate (%d).", g_programName, i_baudRate);
+			fprintf(stderr, "%s: serial_create() - Invalid baudrate (%d).\n", g_programName, i_baudRate);
 
 			result = R_INPUTBAD;
 			goto end;
@@ -69,7 +70,7 @@ Result serial_create(int const i_deviceID,
 	serialHandle = (Serial *)malloc(sizeof(Serial));
 	if(serialHandle == NULL)
 	{
-		fprintf(stderr, "%s: serial_create() - Insufficient memory for serial handle.", g_programName);
+		fprintf(stderr, "%s: serial_create() - Insufficient memory for serial handle.\n", g_programName);
 
 		result = R_MEMORYALLOCATIONERROR;
 		goto end;
@@ -83,7 +84,7 @@ Result serial_create(int const i_deviceID,
 	serialHandle->m_deviceHandle = open(serialPathname, O_RDWR | O_NOCTTY | O_NDELAY);
 	if(serialHandle->m_deviceHandle < 0)
 	{
-		fprintf(stderr, "%s: serial_create() - Unable to open serial device - %s", g_programName, strerror(errno));
+		fprintf(stderr, "%s: serial_create() - Unable to open serial device - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEOPENFAILED;
 		goto end;
@@ -92,7 +93,7 @@ Result serial_create(int const i_deviceID,
 	tcResult = tcgetattr(serialHandle->m_deviceHandle, &serialAttributes);
 	if(tcResult < 0)
 	{
-		fprintf(stderr, "%s: serial_create() - Unable to get serial attributes - %s", g_programName, sterror(errno));
+		fprintf(stderr, "%s: serial_create() - Unable to get serial attributes - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEATTRIBUTEGETFAILED;
 		goto end;
@@ -102,7 +103,7 @@ Result serial_create(int const i_deviceID,
 	cfResult = cfsetispeed(&serialAttributes, deviceBaudRate);
 	if(cfResult < 0)
 	{
-		fprintf(stderr, "%s: serial_create() - Unable to set serial input speed - %s", g_programName, strerror(errno));
+		fprintf(stderr, "%s: serial_create() - Unable to set serial input speed - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEINPUTSPEEDFAILED;
 		goto end;
@@ -111,7 +112,7 @@ Result serial_create(int const i_deviceID,
 	cfResult = cfsetospeed(&serialAttributes, deviceBaudRate);
 	if(cfResult < 0)
 	{
-		fprintf(stderr, "%s: serial_create() - Unable to set serial output speed - %s", g_programName, strerror(errno));
+		fprintf(stderr, "%s: serial_create() - Unable to set serial output speed - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEOUTPUTSPEEDFAILED;
 		goto end;
@@ -152,7 +153,7 @@ Result serial_create(int const i_deviceID,
 	tcResult = tcsetattr(serialHandle->m_deviceHandle, TCSANOW, &serialAttributes);
 	if(tcResult < 0)
 	{
-		fprintf(stderr, "%s: serial_create() - Unable to set serial attributes - %s", g_programName, strerror(errno));
+		fprintf(stderr, "%s: serial_create() - Unable to set serial attributes - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEATTRIBUTESETFAILED;
 		goto end;
@@ -170,7 +171,7 @@ Result serial_create(int const i_deviceID,
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: serial_create(%d, %d, %p)", i_deviceID, i_baudRate, o_serialHandle);
+	fprintf(stderr, "%s: serial_create(%d, %d, %p)\n", g_programName, i_deviceID, i_baudRate, o_serialHandle);
 	serial_destroy(&serialHandle);
 
    return result;
@@ -186,7 +187,7 @@ Result serial_read(  size_t const i_bytesToRead,
 
 	if(i_serialHandle == NULL)
 	{
-		fprintf(stderr, "%s: serial_read() - Handle not created", g_programName);
+		fprintf(stderr, "%s: serial_read() - Handle not created.\n", g_programName);
 
 		result = R_OBJECTNOTEXTANT;
 		goto end;
@@ -195,7 +196,7 @@ Result serial_read(  size_t const i_bytesToRead,
 	readResult = read(i_serialHandle->m_deviceHandle, o_outputBuffer, i_bytesToRead);
 	if(readResult < 0)
 	{
-		fprintf(stderr, "%s: serial_read() - IO Error - %s", g_programName, sterror(errno));
+		fprintf(stderr, "%s: serial_read() - IO Error - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEREADFAILED;
 		goto end;
@@ -209,7 +210,7 @@ Result serial_read(  size_t const i_bytesToRead,
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: serial_read(%zu, %p, %p, %p)\n", i_bytesToRead, o_outputBuffer, o_bytesRead, i_serialHandle);
+	fprintf(stderr, "%s: serial_read(%zu, %p, %p, %p)\n", g_programName, i_bytesToRead, o_outputBuffer, o_bytesRead, i_serialHandle);
 	return result;
 }
 
@@ -223,7 +224,7 @@ Result serial_write( size_t const i_bytesToWrite,
 
 	if(i_serialHandle == NULL)
 	{
-		fprintf(stderr, "%s: serial_write() - Handle not created", g_programName);
+		fprintf(stderr, "%s: serial_write() - Handle not created.\n", g_programName);
 
 		result = R_OBJECTNOTEXTANT;
 		goto end;
@@ -232,7 +233,7 @@ Result serial_write( size_t const i_bytesToWrite,
 	writeResult = write(i_serialHandle->m_deviceHandle, i_data, i_bytesToWrite);
 	if(writeResult < 0)
 	{
-		fprintf(stderr, "%s: serial_write() - IO Error - %s", g_programName, sterror(errno));
+		fprintf(stderr, "%s: serial_write() - IO Error - %s\n", g_programName, strerror(errno));
 
 		result = R_DEVICEWRITEFAILED;
 		goto end;
@@ -246,7 +247,7 @@ Result serial_write( size_t const i_bytesToWrite,
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: serial_write(%zu, %p, %p, %p)\n", i_bytesToWrite, i_data, o_bytesWritten, i_serialHandle);
+	fprintf(stderr, "%s: serial_write(%zu, %p, %p, %p)\n", g_programName, i_bytesToWrite, i_data, o_bytesWritten, i_serialHandle);
 	return result;
 }
 
@@ -272,7 +273,7 @@ Result serial_destroy(Serial ** const io_serialHandle)
 	closeResult = close(serialHandle->m_deviceHandle);
 	if(closeResult < 0)
 	{
-		fprintf(stderr, "%s: serial_destroy() - Error closing port - %s", g_programName, strerror(errno));
+		fprintf(stderr, "%s: serial_destroy() - Error closing port - %s\n", g_programName, strerror(errno));
 	
 		return R_DEVICECLOSEFAILED;
 	}
