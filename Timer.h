@@ -1,6 +1,10 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/time.h>
 
 /********************----- STRUCT: Timer -----********************/
@@ -16,5 +20,9 @@ typedef struct Timer_s Timer;
 void timer_start(Timer * const o_timerHandle);
 void timer_stop(Timer * const io_timerHandle);
 double timer_total_seconds(Timer const * const i_timerHandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _TIMER_H_ */

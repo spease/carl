@@ -1,6 +1,10 @@
 #ifndef _SERIAL_H_
 #define _SERIAL_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "carl.h"
 
 #include <stdlib.h>
@@ -48,5 +52,9 @@ Result serial_write(	size_t const i_bytesToWrite,
 							size_t * const o_bytesWritten,
 							Serial const * const i_serialHandle);
 Result serial_destroy(Serial ** const io_serialHandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SERIAL_H_ */

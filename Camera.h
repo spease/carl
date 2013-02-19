@@ -1,6 +1,10 @@
 #ifndef _CAMERA_H_
 #define _CAMERA_H_
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 #include "carl.h"
 
 #include <stdint.h>
@@ -21,7 +25,10 @@ enum PixelFormat_e
 typedef enum PixelFormat_e PixelFormat;
 /**************************************************/
 
-Result camera_capture(CameraHandle * const io_cameraHandle, size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer);
+typedef void (*CameraCallback)(uint8_t const * const i_frameData, size_t const i_frameSizeBytes, void * const i_callbackData);
+
+Result camera_capture_callback(CameraCallback i_callback, void * const i_callbackData, CameraHandle * const io_cameraHandle);
+Result camera_capture_copy(size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer, CameraHandle * const io_cameraHandle);
 Result camera_create(int32_t i_deviceID,
 							PixelFormat const i_pixelFormat,
 							uint32_t const i_sizeX,
@@ -30,5 +37,9 @@ Result camera_create(int32_t i_deviceID,
 Result camera_destroy(CameraHandle **const io_cameraHandle);
 Result camera_start(CameraHandle *const io_cameraHandle);
 Result camera_stop(CameraHandle * const io_cameraHandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* _CAMERA_H_ */

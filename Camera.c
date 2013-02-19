@@ -46,7 +46,32 @@ static inline int xioctl(int const i_fileHandle, int const i_request, void * con
 	return ioResult;
 }
 
-Result camera_capture(CameraHandle * const io_cameraHandle, size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer)
+struct camera_capture_data_t
+{
+	size_t m_outputSizeBytesMax;
+	uint8_t * m_outputBuffer;
+};
+
+static void camera_capture_data_callback(uint8_t const * const i_frameData, size_t const i_frameSizeBytes, void * const i_callbackData)
+{
+	struct camera_capture_data_t const * const capData = ((struct camera_capture_data_t*)i_callbackData);
+
+	if(capData->m_outputBuffer != NULL && capData->m_outputSizeBytesMax > 0)
+	{
+		memcpy(capData->m_outputBuffer, i_frameData, MIN(i_frameSizeBytes, capData->m_outputSizeBytesMax));
+	}
+}
+
+Result camera_capture_copy(size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer, CameraHandle * const io_cameraHandle)
+{
+	struct camera_capture_data_t capData;
+	capData.m_outputSizeBytesMax = i_outputSizeBytesMax;
+	capData.m_outputBuffer = o_outputBuffer;
+
+	return camera_capture_callback(camera_capture_data_callback, (void*)(&capData), io_cameraHandle);
+}
+
+Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, CameraHandle * const io_cameraHandle)
 {
 	fd_set fds;
 	struct timeval tv;
@@ -106,9 +131,9 @@ Result camera_capture(CameraHandle * const io_cameraHandle, size_t const i_outpu
 	}
 
 	/***** Copy the data *****/
-	if(o_outputBuffer != NULL && i_outputSizeBytesMax > 0)
+	if(i_callback != NULL)
 	{
-		memcpy(o_outputBuffer, io_cameraHandle->m_buffers[buffer.index].m_start, MIN(buffer.bytesused, i_outputSizeBytesMax));
+		i_callback(io_cameraHandle->m_buffers[buffer.index].m_start, buffer.bytesused, i_callbackData);
 	}
 
 	/***** Requeue buffer *****/
@@ -268,7 +293,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 
 	/***** Setup buffer request *****/
 	CLEAR(bufferRequest);
-	bufferRequest.count = 30;
+	bufferRequest.count = 4;
 	bufferRequest.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	bufferRequest.memory = V4L2_MEMORY_MMAP;
 
@@ -361,7 +386,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: camera_create(%d, %d, %u, %u, %p)", i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
+	fprintf(stderr, "%s: camera_create(%d, %d, %u, %u, %p)\n", i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
 	camera_destroy(&cameraHandle);
 
 	return result;
