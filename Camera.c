@@ -188,6 +188,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	/***** Clear fields *****/
 	cameraHandle->m_buffers = NULL;
 	cameraHandle->m_bufferCount = 0;
+	cameraHandle->m_bufferCountMax = 0;
 	cameraHandle->m_deviceHandle = -1;
 	CLEAR(cameraHandle->m_format);
 
@@ -386,7 +387,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: camera_create(%d, %d, %u, %u, %p)\n", i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
+	fprintf(stderr, "%s: camera_create(%d, %d, %u, %u, %p)\n", g_programName, i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
 	camera_destroy(&cameraHandle);
 
 	return result;
@@ -417,7 +418,7 @@ Result camera_destroy(CameraHandle **const io_cameraHandle)
 	{
 		while(cameraHandle->m_bufferCount > 0)
 		{
-			bufferIndex = cameraHandle->m_bufferCount;
+			bufferIndex = cameraHandle->m_bufferCount-1;
 			munmap(cameraHandle->m_buffers[bufferIndex].m_start, cameraHandle->m_buffers[bufferIndex].m_sizeBytes);
 			--(cameraHandle->m_bufferCount);
 		}
