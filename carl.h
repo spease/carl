@@ -37,8 +37,13 @@ typedef enum Result_e Result;
 /**************************************************/
 
 /********************----- Utility Macros -----********************/
+#ifndef CLEAR
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
+#endif
+
+#ifndef MIN
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#endif
 /**************************************************/
 
 extern char const * g_programName;
