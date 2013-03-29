@@ -13,6 +13,8 @@
 
 static char const * const DEVICE_PATH_PRINTF="/dev/video%d";
 static uint32_t const DEVICE_FIELD = V4L2_FIELD_NONE;
+static uint32_t const DEVICE_BUFFER_COUNT = 2;
+static enum v4l2_priority const DEVICE_PRIORITY = V4L2_PRIORITY_RECORD;
 
 /********************----- STRUCT: Buffer -----********************/
 struct Buffer_s
@@ -31,6 +33,8 @@ struct CameraHandle_s
 	size_t m_bufferCountMax;
 	int m_deviceHandle;
 	struct v4l2_format m_format;
+	struct v4l2_captureparm m_parameters;
+	enum v4l2_priority m_priority;
 };
 typedef struct CameraHandle_s CameraHandle;
 /**************************************************/
@@ -159,6 +163,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	struct v4l2_requestbuffers bufferRequest;
 	CameraHandle *cameraHandle = NULL;
 	struct v4l2_capability cap;
+	struct v4l2_control currentControl;
 	char devicePathname[PATH_MAX];
 	uint32_t devicePixelFormat = 0;
 	uint32_t deviceSizeX = 0;
@@ -292,9 +297,94 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 		goto end;
 	}
 
+	/***** Apply camera stream parameters *****/
+	/*
+	CLEAR(cameraHandle->m_parameters);
+	cameraHandle->m_parameters.capturemode |= V4L2_MODE_HIGHQUALITY;
+	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_PARM, &(cameraHandle->m_parameters));
+	if(xioResult == -1)
+	{
+		fprintf(stderr, "%s: camera_create() - Parameter application failed - %s\n", g_programName, strerror(errno));
+
+		result = R_DEVICEPARAMETERSETFAILED;
+		goto end;
+	}
+	if(!(cameraHandle->m_parameters.capturemode & V4L2_MODE_HIGHQUALITY))
+	{
+		fprintf(stderr, "%s: camera_create() - Driver did not set high quality mode\n", g_programName);
+
+		result = R_DEVICEHIGHQUALITYFAILED;
+		goto end;
+	}
+	*/
+
+	/***** Apply camera priority *****/
+	/*
+	cameraHandle->m_priority = DEVICE_PRIORITY;
+	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_PRIORITY, &cameraHandle->m_priority);
+	if(xioResult == -1)
+	{
+		if(errno == EBUSY)
+		{
+			fprintf(stderr, "%s: camera_create() - Another file handle alreaddy has priority - %s\n", g_programName, strerror(errno));
+		}
+		else
+		{
+			fprintf(stderr, "%s: camera_create() - Priority application failed - %s\n", g_programName, strerror(errno));
+		}
+		result = R_DEVICEPRIORITYSETFAILED;
+		goto end;
+	}
+	if(cameraHandle->m_priority != DEVICE_PRIORITY)
+	{
+		fprintf(stderr, "%s: camera_create() - Driver set priority %d\n", g_programName, cameraHandle->m_priority);
+
+		result = R_DEVICEPRIORITYFAILED;
+		goto end;
+	}
+	*/
+
+	/***** Apply camera controls *****/
+	CLEAR(currentControl);
+	currentControl.id = V4L2_CID_EXPOSURE_AUTO;
+	currentControl.value = V4L2_EXPOSURE_MANUAL;
+	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_CTRL, &currentControl);
+	if(xioResult == -1)
+	{
+		fprintf(stderr, "%s: camera_create() - Unable to set shutter priority - %s\n", g_programName, strerror(errno));
+
+		result = R_DEVICECONTROLSETFAILED;
+		goto end;
+	}
+	CLEAR(currentControl);
+	currentControl.id = V4L2_CID_EXPOSURE_ABSOLUTE;
+	currentControl.value = 10000;
+	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_CTRL, &currentControl);
+	if(xioResult == -1)
+	{
+		fprintf(stderr, "%s: camera_create() - Unable to set exposure - %s\n", g_programName, strerror(errno));
+
+		result = R_DEVICECONTROLSETFAILED;
+		goto end;
+	}
+	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_G_CTRL, &currentControl);
+	if(xioResult == -1)
+	{
+		fprintf(stderr, "%s: camera_create() - Unable to get exposure - %s\n", g_programName, strerror(errno));
+
+		result = R_DEVICECONTROLSETFAILED;
+		goto end;
+	}
+	if(currentControl.value != 9999)
+	{
+		fprintf(stderr, "lolnuts");
+		result = R_FAILURE;
+		goto end;
+	}
+
 	/***** Setup buffer request *****/
 	CLEAR(bufferRequest);
-	bufferRequest.count = 4;
+	bufferRequest.count = DEVICE_BUFFER_COUNT;
 	bufferRequest.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	bufferRequest.memory = V4L2_MEMORY_MMAP;
 
