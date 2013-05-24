@@ -43,6 +43,18 @@ double timer_total_seconds(Timer const * const i_timerHandle)
 		return math_nan();
 	}
 
+	if(i_timerHandle->m_timeTotalSeconds == math_nan())
+   {
+		struct timeval timeCurrent;
+		double timeTotalMicroseconds = 0.0;
+
+		gettimeofday(&timeCurrent, NULL);
+		timeTotalMicroseconds = ((double)(timeCurrent.tv_sec - i_timerHandle->m_timeStart.tv_sec))*1000000.0;
+		timeTotalMicroseconds +=((double)(timeCurrent.tv_usec - i_timerHandle->m_timeStart.tv_usec));
+
+		return (timeTotalMicroseconds / 1000000.0);
+   }
+
 	return i_timerHandle->m_timeTotalSeconds;
 }
 
