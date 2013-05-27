@@ -17,6 +17,8 @@ struct Timer_s
 typedef struct Timer_s Timer;
 /**************************************************/
 
+void timer_sleep(double const i_seconds);
+
 void timer_start(Timer * const o_timerHandle);
 void timer_stop(Timer * const io_timerHandle);
 double timer_total_seconds(Timer const * const i_timerHandle);
