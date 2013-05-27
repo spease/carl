@@ -7,7 +7,7 @@
 
 static uint64_t const NAN_u64 = 0x7ff0000000000000;
 
-inline double math_nan(void)
+inline static double math_nan(void)
 {
 	return *((double*)&NAN_u64);
 }
