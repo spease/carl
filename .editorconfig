@@ -1,0 +1,52 @@
+;http://www.editorconfig.org
+
+root=true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.c]
+indent_style = tab
+indent_size = 3
+
+[*.cmake]
+indent_style = space
+indent_size = 2
+
+[*.cpp]
+indent_style = tab
+indent_size = 3
+
+[*.h]
+indent_style = tab
+indent_size = 3
+
+[*.hpp]
+indent_style = tab
+indent_size = 3
+
+[*.ino]
+indent_style = space
+indent_size = 2
+
+[*.pde]
+indent_style = space
+indent_size = 2
+
+[*.py]
+indent_style = tab
+indent_size = 4
+
+[*.sh]
+indent_style = space
+indent_size = 2
+
+[CMakeLists.txt]
+indent_style = space
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+indent_size = 4
