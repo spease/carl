@@ -25,8 +25,8 @@ struct Buffer_s
 typedef struct Buffer_s Buffer;
 /**************************************************/
 
-/********************----- STRUCT: CameraHandle -----********************/
-struct CameraHandle_s
+/********************----- STRUCT: Camera -----********************/
+struct Camera_s
 {
 	Buffer *m_buffers;
 	size_t m_bufferCount;
@@ -36,7 +36,7 @@ struct CameraHandle_s
 	struct v4l2_captureparm m_parameters;
 	enum v4l2_priority m_priority;
 };
-typedef struct CameraHandle_s CameraHandle;
+typedef struct Camera_s Camera;
 /**************************************************/
 
 static inline int xioctl(int const i_fileHandle, int const i_request, void * const i_argument)
@@ -66,7 +66,7 @@ static void camera_capture_data_callback(uint8_t const * const i_frameData, size
 	}
 }
 
-Result camera_capture_copy(size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer, CameraHandle * const io_cameraHandle)
+Result camera_capture_copy(size_t const i_outputSizeBytesMax, uint8_t * const o_outputBuffer, Camera * const io_cameraHandle)
 {
 	struct camera_capture_data_t capData;
 	capData.m_outputSizeBytesMax = i_outputSizeBytesMax;
@@ -75,7 +75,7 @@ Result camera_capture_copy(size_t const i_outputSizeBytesMax, uint8_t * const o_
 	return camera_capture_callback(camera_capture_data_callback, (void*)(&capData), io_cameraHandle);
 }
 
-Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, CameraHandle * const io_cameraHandle)
+Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, Camera * const io_cameraHandle)
 {
 	fd_set fds;
 	struct timeval tv;
@@ -155,13 +155,13 @@ end:
 }
 	
 
-Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, uint32_t const i_sizeX, uint32_t const i_sizeY, CameraHandle ** const o_cameraHandle)
+Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, uint32_t const i_sizeX, uint32_t const i_sizeY, Camera ** const o_cameraHandle)
 {
 	struct v4l2_buffer buffer;
 	size_t bufferIndex=0;
 	void *bufferMap=NULL;
 	struct v4l2_requestbuffers bufferRequest;
-	CameraHandle *cameraHandle = NULL;
+	Camera *cameraHandle = NULL;
 	struct v4l2_capability cap;
 	struct v4l2_control currentControl;
 	char devicePathname[PATH_MAX];
@@ -181,7 +181,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	}
 
 	/***** Create camera structure *****/
-	cameraHandle = (CameraHandle*) malloc(sizeof(CameraHandle));
+	cameraHandle = (Camera*) malloc(sizeof(Camera));
 	if(cameraHandle == NULL)
 	{
 		fprintf(stderr, "%s: camera_create() - Unable to allocate memory.\n", g_programName);
@@ -483,10 +483,10 @@ end:
 	return result;
 };
 
-Result camera_destroy(CameraHandle **const io_cameraHandle)
+Result camera_destroy(Camera **const io_cameraHandle)
 {
 	size_t bufferIndex=0;
-	CameraHandle *cameraHandle = NULL;
+	Camera *cameraHandle = NULL;
 
 	/***** Input Validation *****/
 	if(io_cameraHandle == NULL)
@@ -531,7 +531,7 @@ Result camera_destroy(CameraHandle **const io_cameraHandle)
 	return R_SUCCESS;
 }
 
-Result camera_start(CameraHandle *const io_cameraHandle)
+Result camera_start(Camera *const io_cameraHandle)
 {
 	int xioResult = -1;
 	int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -548,7 +548,7 @@ Result camera_start(CameraHandle *const io_cameraHandle)
 	return R_SUCCESS;
 }
 
-Result camera_stop(CameraHandle * const io_cameraHandle)
+Result camera_stop(Camera * const io_cameraHandle)
 {
 	int xioResult = -1;
 	int type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
