@@ -1,5 +1,6 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
+#include <stdint.h>
 
 /********************----- ENUM: Result -----********************/
 enum Result_e
@@ -41,13 +42,25 @@ enum Result_e
 typedef enum Result_e Result;
 /**************************************************/
 
+/********************----- Internal Constants -----********************/
+extern uint64_t const g_nanU64;
+/**************************************************/
+
 /********************----- Utility Macros -----********************/
 #ifndef CLEAR
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 #endif
 
+#ifndef MAX
+#define MAX(a,b) (((a) >= (b)) ? (a) : (b))
+#endif
+
 #ifndef MIN
 #define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#endif
+
+#ifndef NAN
+#define NAN() (*((double*)&g_nanU64))
 #endif
 /**************************************************/
 

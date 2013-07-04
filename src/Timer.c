@@ -5,13 +5,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static uint64_t const NAN_u64 = 0x7ff0000000000000;
-
-inline static double math_nan(void)
-{
-	return *((double*)&NAN_u64);
-}
-
 void timer_sleep(double const i_seconds)
 {
 	int const seconds = (int)floor(i_seconds);
