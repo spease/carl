@@ -2,5 +2,7 @@
 *.o
 *.swp
 bin/
+inc/
+lib/
 obj/
 
