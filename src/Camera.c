@@ -2,6 +2,7 @@
 
 #include <linux/limits.h>
 #include <linux/videodev2.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 
 #include <errno.h>
@@ -10,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static char const * const DEVICE_PATH_PRINTF="/dev/video%d";
 static uint32_t const DEVICE_FIELD = V4L2_FIELD_NONE;
@@ -36,7 +38,6 @@ struct Camera_s
 	struct v4l2_captureparm m_parameters;
 	enum v4l2_priority m_priority;
 };
-typedef struct Camera_s Camera;
 /**************************************************/
 
 static inline int xioctl(int const i_fileHandle, int const i_request, void * const i_argument)
@@ -86,7 +87,7 @@ Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, 
 
 	if(io_cameraHandle == NULL)
 	{
-		fprintf(stderr, "%s: camera_capture() - Camera not created.\n", g_programName);
+		CARL_ERROR("Camera not created.");
 
 		result = R_OBJECTNOTEXTANT;
 		goto end;
@@ -127,7 +128,7 @@ Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, 
 		}
 		else
 		{
-			fprintf(stderr, "%s: camera_capture() - Unable to dequeue buffer - %s\n", g_programName, io_cameraHandle, strerror(errno)); 
+			CARL_ERROR("Unable to dequeue buffer - \"%s\"", strerror(errno));
 
 			result = R_BUFFERDEQUEUEFAILED;
 			goto end;
@@ -144,7 +145,7 @@ Result camera_capture_callback(CameraCallback i_callback, void *i_callbackData, 
 	xioResult = xioctl(io_cameraHandle->m_deviceHandle, VIDIOC_QBUF, &buffer);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_capture() - Unable to dequeue buffer - %s\n", g_programName, io_cameraHandle, strerror(errno));
+		CARL_ERROR("Unable to requeue buffer - \"%s\"", strerror(errno));
 
 		result = R_BUFFERENQUEUEFAILED;
 		goto end;
@@ -174,7 +175,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	/***** Input Validation *****/
 	if(i_sizeX == 0 || i_sizeY == 0)
 	{
-		fprintf(stderr, "%s: camera_create() - Frame size must be non-0 for both dimensions.\n", g_programName);
+		CARL_ERROR("Frame size must be non-0 for both dimensions.");
 
 		result = R_INPUTBAD;
 		goto end;
@@ -184,9 +185,9 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	cameraHandle = (Camera*) malloc(sizeof(Camera));
 	if(cameraHandle == NULL)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to allocate memory.\n", g_programName);
-		result = R_MEMORYALLOCATIONERROR;
+		CARL_ERROR("Unable to allocate memory.");
 
+		result = R_MEMORYALLOCATIONERROR;
 		goto end;
 	}
 
@@ -200,7 +201,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	/***** Generate camera path *****/
 	if(i_deviceID < 0)
 	{
-		fprintf(stderr, "%s: camera_create() - Device ID must be > 0.\n", g_programName);
+		CARL_ERROR("Device ID must be > 0.");
 
 		result = R_INPUTBAD;
 		goto end;
@@ -211,7 +212,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	cameraHandle->m_deviceHandle = open(devicePathname, O_RDWR | O_NONBLOCK, 0);
 	if(cameraHandle->m_deviceHandle < 0)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to open device - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Unable to open device - \"%s\"", strerror(errno));
 
 		result = R_DEVICEOPENFAILED;
 		goto end;
@@ -222,21 +223,21 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_QUERYCAP, &cap);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create(%p) - Not a video capture device - %s", g_programName, o_cameraHandle, strerror(errno));
+		CARL_ERROR("Not a video capture device - \"%s\"", strerror(errno));
 
 		result = R_DEVICEINVALID;
 		goto end;
 	}
 	if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
 	{
-		fprintf(stderr, "%s: camera_create(%p) - Device cannot capture video", g_programName, o_cameraHandle, strerror(errno));
+		CARL_ERROR("Device cannot capture video.");
 
 		result = R_DEVICENOVIDEOCAP;
 		goto end;
 	}
 	if(!(cap.capabilities & V4L2_CAP_STREAMING))
 	{
-		fprintf(stderr, "%s: camera_create(%p) - Device cannot stream", g_programName, o_cameraHandle, strerror(errno));
+		CARL_ERROR("Device cannot stream.");
 
 		result = R_DEVICENOSTREAMCAP;
 		goto end;
@@ -257,7 +258,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 			devicePixelFormat = V4L2_PIX_FMT_YUYV;
 			break;
 		default:
-			fprintf(stderr, "%s: camera_create() - Unsupported pixel format %d specified", i_pixelFormat);
+			CARL_ERROR("Unsupported pixel format %d specified", i_pixelFormat);
 
 			result = R_INPUTBAD;
 			goto end;
@@ -275,7 +276,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_FMT, &(cameraHandle->m_format));
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create() - Attribute application failed - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Attribute application failed - \"%s\"", strerror(errno));
 
 		result = R_DEVICEATTRIBUTESETFAILED;
 		goto end;
@@ -284,14 +285,14 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	/***** Check camera attributes *****/
 	if(cameraHandle->m_format.fmt.pix.pixelformat != devicePixelFormat)
 	{
-		fprintf(stderr, "%s: camera_create() - Driver set different pixel format (%u)\n", g_programName, cameraHandle->m_format.fmt.pix.pixelformat);
+		CARL_ERROR("Driver set different pixel format (%u)", cameraHandle->m_format.fmt.pix.pixelformat);
 
 		result = R_DEVICEPIXELFORMATFAILED;
 		goto end;
 	}
 	if(cameraHandle->m_format.fmt.pix.width != deviceSizeX || cameraHandle->m_format.fmt.pix.height != deviceSizeY)
 	{
-		fprintf(stderr, "%s: camera_create() - Driver set different resolution (%u x %u)\n", g_programName, cameraHandle->m_format.fmt.pix.width, cameraHandle->m_format.fmt.pix.height);
+		CARL_ERROR("Driver set different resolution (%u x %u)", cameraHandle->m_format.fmt.pix.width, cameraHandle->m_format.fmt.pix.height);
 
 		result = R_DEVICERESOLUTIONFAILED;
 		goto end;
@@ -345,13 +346,14 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	*/
 
 	/***** Apply camera controls *****/
+#if 0
 	CLEAR(currentControl);
 	currentControl.id = V4L2_CID_EXPOSURE_AUTO;
 	currentControl.value = V4L2_EXPOSURE_MANUAL;
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_CTRL, &currentControl);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to set shutter priority - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Unable to set shutter priority - \"%s\"", strerror(errno));
 
 		result = R_DEVICECONTROLSETFAILED;
 		goto end;
@@ -362,7 +364,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_S_CTRL, &currentControl);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to set exposure - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Unable to set exposure - \"%s\"", strerror(errno));
 
 		result = R_DEVICECONTROLSETFAILED;
 		goto end;
@@ -370,7 +372,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_G_CTRL, &currentControl);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to get exposure - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Unable to get exposure - \"%s\"", strerror(errno));
 
 		result = R_DEVICECONTROLSETFAILED;
 		goto end;
@@ -381,6 +383,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 		result = R_FAILURE;
 		goto end;
 	}
+#endif
 
 	/***** Setup buffer request *****/
 	CLEAR(bufferRequest);
@@ -392,7 +395,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_REQBUFS, &bufferRequest);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_create() - Buffer request failed - %s\n", g_programName, strerror(errno));
+		CARL_ERROR("Buffer request failed - \"%s\"", strerror(errno));
 
 		result = R_BUFFERREQUESTFAILED;
 		goto end;
@@ -402,7 +405,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	cameraHandle->m_buffers = calloc(bufferRequest.count, sizeof(*(cameraHandle->m_buffers)));
 	if(cameraHandle->m_buffers == NULL)
 	{
-		fprintf(stderr, "%s: camera_create() - Unable to allocate memory for buffer pointers\n", g_programName);
+		CARL_ERROR("Unable to allocate memory for buffer pointers.");
 
 		result = R_MEMORYALLOCATIONERROR;
 		goto end;
@@ -423,7 +426,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 		xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_QUERYBUF, &buffer);
 		if(xioResult == -1)
 		{
-			fprintf(stderr, "%s: camera_create() - Buffer query failed - %s\n", g_programName, strerror(errno));
+			CARL_ERROR("Buffer query failed - \"%s\"", strerror(errno));
 
 			result = R_BUFFERQUERYFAILED;
 			goto end;
@@ -433,7 +436,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 		bufferMap = mmap(NULL, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, cameraHandle->m_deviceHandle, buffer.m.offset);
 		if(MAP_FAILED == bufferMap)
 		{
-			fprintf(stderr, "%s: camera_create() - Buffer map failed - %s\n", g_programName, strerror(errno));
+			CARL_ERROR("Buffer map failed - \"%s\"", strerror(errno));
 
 			result = R_BUFFERMAPFAILED;
 			goto end;
@@ -456,7 +459,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 		xioResult = xioctl(cameraHandle->m_deviceHandle, VIDIOC_QBUF, &buffer);
 		if(xioResult == -1)
 		{
-			fprintf(stderr, "%s: camera_create() - Buffer queue failed - %s\n", g_programName, strerror(errno));
+			CARL_ERROR("Buffer queue failed - \"%s\"", strerror(errno));
 
 			result = R_BUFFERENQUEUEFAILED;
 			goto end;
@@ -477,7 +480,7 @@ Result camera_create(int32_t const i_deviceID, PixelFormat const i_pixelFormat, 
 	return R_SUCCESS;
 
 end:
-	fprintf(stderr, "%s: camera_create(%d, %d, %u, %u, %p)\n", g_programName, i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
+	CARL_ERROR("camera_create(%d, %d, %u, %u, %p)", i_deviceID, i_pixelFormat, i_sizeX, i_sizeY, o_cameraHandle);
 	camera_destroy(&cameraHandle);
 
 	return result;
@@ -491,7 +494,7 @@ Result camera_destroy(Camera **const io_cameraHandle)
 	/***** Input Validation *****/
 	if(io_cameraHandle == NULL)
 	{
-		fprintf(stderr, "%s: camera_destroy() - Received NULL pointer\n", g_programName);
+		CARL_ERROR("Received NULL pointer");
 		return R_INPUTBAD;
 	}
 
@@ -499,7 +502,7 @@ Result camera_destroy(Camera **const io_cameraHandle)
 	cameraHandle = (*io_cameraHandle);
 	if(cameraHandle == NULL)
 	{
-		fprintf(stderr, "%s: camera_destroy() - Camera handle already destroyed\n", g_programName);
+		CARL_ERROR("Camera handle already destroyed");
 		return R_OBJECTNOTEXTANT;
 	}
 
@@ -540,7 +543,7 @@ Result camera_start(Camera *const io_cameraHandle)
 	xioResult = xioctl(io_cameraHandle->m_deviceHandle, VIDIOC_STREAMON, &type);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_start(%p) - xioctl - %s", g_programName, io_cameraHandle, strerror(errno));
+		CARL_ERROR("xioctl - \"%s\"", strerror(errno));
 
 		return R_DEVICESTARTFAILED;
 	}
@@ -557,7 +560,7 @@ Result camera_stop(Camera * const io_cameraHandle)
 	xioResult = xioctl(io_cameraHandle->m_deviceHandle, VIDIOC_STREAMOFF, &type);
 	if(xioResult == -1)
 	{
-		fprintf(stderr, "%s: camera_stop(%p) - xioctl - %s", g_programName, io_cameraHandle, strerror(errno));
+		CARL_ERROR("xioctl - \"%s\"", strerror(errno));
 
 		return R_DEVICESTOPFAILED;
 	}

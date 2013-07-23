@@ -11,7 +11,7 @@ void timer_sleep(double const i_seconds)
 		sleep((int)i_seconds);
 	}
 
-	useconds_t const microseconds = ((i_seconds-((double)seconds))*1000000.0);
+	__useconds_t const microseconds = ((i_seconds-((double)seconds))*1000000.0);
 	usleep(microseconds);
 }
 

@@ -36,7 +36,9 @@ enum Result_e
 	R_DEVICEHIGHQUALITYFAILED=-26,
 	R_DEVICEPRIORITYSETFAILED=-27,
 	R_DEVICEPRIORITYFAILED=-28,
-	R_DEVICECONTROLSETFAILED=-29
+	R_DEVICECONTROLSETFAILED=-29,
+	R_LOCALTIMEFAILED=-30,
+	R_STRINGFORMATFAILED=-31
 };
 
 typedef enum Result_e Result;
@@ -64,6 +66,17 @@ extern uint64_t const g_nanU64;
 #endif
 /**************************************************/
 
-extern char const * g_programName;
+/********************----- Internal Error Handling -----********************/
+void carl_error(char const * const i_functionName, ...);
+void carl_errorno(char const * const i_functionName, ...);
+void carl_info(char const * const i_functionName, ...);
+/**************************************************/
+
+/********************----- Error Handling -----********************/
+#define CARL_ERROR(...) carl_error(__func__, __VA_ARGS__)
+#define CARL_ERRORNO(...) carl_errorno(__func__, __VA_ARGS__)
+#define CARL_INFO(...) carl_info(__func__, __VA_ARGS__)
+Result carl_set_program_name(char const * const i_programName);
+/**************************************************/
 
 #endif	/* _GLOBAL_H_ */

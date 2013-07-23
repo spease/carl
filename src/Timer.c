@@ -1,9 +1,11 @@
 #include "Timer.h"
+#include "carl.h"
 
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 void timer_sleep(double const i_seconds)
 {
@@ -13,7 +15,7 @@ void timer_sleep(double const i_seconds)
 		sleep((int)i_seconds);
 	}
 
-	useconds_t const microseconds = ((i_seconds-((double)seconds))*1000000.0);
+	__useconds_t const microseconds = ((i_seconds-((double)seconds))*1000000.0);
 	usleep(microseconds);
 }
 
@@ -24,7 +26,7 @@ void timer_start(Timer * const o_timerHandle)
 		return;
 	}
 
-	o_timerHandle->m_timeTotalSeconds = math_nan();
+	o_timerHandle->m_timeTotalSeconds = NAN;
 	gettimeofday(&o_timerHandle->m_timeStart, NULL);
 }
 
@@ -47,10 +49,10 @@ double timer_total_seconds(Timer const * const i_timerHandle)
 {
 	if(i_timerHandle == NULL)
 	{
-		return math_nan();
+		return NAN;
 	}
 
-	if(i_timerHandle->m_timeTotalSeconds == math_nan())
+	if(i_timerHandle->m_timeTotalSeconds == NAN)
    {
 		struct timeval timeCurrent;
 		double timeTotalMicroseconds = 0.0;
