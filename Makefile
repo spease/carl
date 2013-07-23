@@ -12,7 +12,7 @@ SOURCE_PATH=src
 LIBRARY_PATH=lib
 
 #----- Automatic machinery -----#
-LIBRARY=$(LIBRARY_PATH)/lib$(LIBRARY_NAME).a
+LIBRARY=$(LIBRARY_PATH)/lib$(LIBRARY_NAME).so
 INCLUDES=$(patsubst $(SOURCE_PATH)/%.h,$(INCLUDE_PATH)/%.h,$(wildcard $(SOURCE_PATH)/*.h))
 OBJECT_FILEPATHS=$(addprefix $(OBJECT_PATH)/, $(addsuffix .o, $(OBJECTS)))
 
