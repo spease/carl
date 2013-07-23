@@ -1,6 +1,7 @@
 #ifndef _GLOBAL_H_
 #define _GLOBAL_H_
 #include <stdint.h>
+#include <string.h>
 
 /********************----- ENUM: Result -----********************/
 enum Result_e
