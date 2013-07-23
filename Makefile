@@ -3,7 +3,8 @@ CC=gcc
 CFLAGS=-O3 -Wall -pedantic -std=c99 -D _BSD_SOURCE
 LDFLAGS=-lv4l2 -lbsd-compat
 OBJECTS=Camera Serial Timer carl time
-LIBRARY=$(LIBRARY_PATH)/libcarl.a
+
+LIBRARY_NAME=carl
 
 INCLUDE_PATH=inc/carl
 OBJECT_PATH=obj
